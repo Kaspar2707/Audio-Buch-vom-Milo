@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Lern App 🌟</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#FFF8F0; --orange:#FF6B35; --green:#4CAF8C; --blue:#5B8FFF;
+  --purple:#C76BF5; --yellow:#FFD700; --red:#e74c3c;
+  --font:'Nunito',sans-serif; --radius:22px; --shadow:0 8px 24px rgba(0,0,0,.13);
+  --tray-h:170px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px 14px calc(var(--tray-h) + 24px);overflow-x:hidden}
+
+/* Header */
+header{width:100%;max-width:980px;display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+header h1{font-size:clamp(1.4rem,4vw,2.1rem);font-weight:900;color:var(--orange)}
+.hbtns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.hbtn{background:white;border:3px solid var(--orange);color:var(--orange);
+  font-family:var(--font);font-weight:900;font-size:.82rem;padding:7px 13px;
+  border-radius:50px;cursor:pointer;transition:all .2s;
+  box-shadow:0 3px 10px rgba(0,0,0,.08);white-space:nowrap}
+.hbtn:hover{background:var(--orange);color:white}
+.hbtn.blue{border-color:var(--blue);color:var(--blue)}.hbtn.blue:hover{background:var(--blue);color:white}
+.hbtn.purple{border-color:var(--purple);color:var(--purple)}.hbtn.purple:hover{background:var(--purple);color:white}
+.hbtn.green{border-color:var(--green);color:var(--green)}.hbtn.green:hover{background:var(--green);color:white}
+.hbtn:hover[style*="20b2aa"]{background:#20b2aa;color:white}
+.hbtn.active-edit{background:#fff3cd;border-color:#e6a817;color:#8a6000}
+
+/* Tabs */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+  margin-bottom:18px;width:100%;max-width:980px;align-items:center}
+.tab{padding:8px 18px;border-radius:50px;border:3px solid transparent;
+  font-family:var(--font);font-size:.93rem;font-weight:800;cursor:pointer;
+  transition:all .2s;background:white;color:#555;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.tab:hover,.tab.active{color:white;transform:translateY(-2px);box-shadow:0 5px 15px rgba(0,0,0,.15)}
+.tab-edit-btn{background:none;border:2px solid #ddd;border-radius:50%;
+  width:26px;height:26px;font-size:.72rem;cursor:pointer;color:#aaa;
+  display:none;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.tab-edit-btn:hover{background:#fff3cd;border-color:#e6a817;color:#8a6000}
+body.edit-mode .tab-edit-btn{display:flex}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));
+  gap:14px;width:100%;max-width:980px}
+.card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;align-items:center;cursor:pointer;
+  transition:transform .15s,box-shadow .15s,border-color .15s,opacity .2s;
+  user-select:none;border:4px solid transparent;
+  animation:popIn .35s cubic-bezier(.175,.885,.32,1.275) both;
+  overflow:hidden;position:relative;min-height:160px}
+.card:hover{transform:scale(1.04) translateY(-3px);box-shadow:0 14px 32px rgba(0,0,0,.16)}
+.card:active{transform:scale(.91)}
+.card.speaking{border-color:var(--yellow)}
+.card.in-sentence{border-color:var(--green)}
+.card.drag-over{border-color:var(--blue);background:#f0f5ff;transform:scale(1.06)}
+.card.dragging{opacity:.4;transform:scale(.93)}
+
+.card-img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#f8f8f8;
+  display:block;padding:10px;transition:transform .2s}
+.card.speaking .card-img{animation:imgBounce .5s ease infinite alternate}
+.card-label{width:100%;padding:7px 8px 11px;font-size:clamp(.88rem,2.5vw,1.18rem);
+  font-weight:900;color:#333;text-align:center;line-height:1.2;min-height:36px}
+.card-label.empty{color:#bbb;font-style:italic;font-size:.8rem}
+
+.badge{position:absolute;top:7px;right:7px;width:24px;height:24px;
+  border-radius:50%;font-size:.8rem;display:flex;align-items:center;justify-content:center;
+  font-weight:900;opacity:0;transition:opacity .2s;background:var(--green);color:white}
+.card.in-sentence .badge{opacity:1}
+
+/* Edit mode overlays */
+.edit-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  transition:background .2s}
+body.edit-mode .edit-overlay{display:flex}
+body.edit-mode .card:hover .edit-overlay{background:rgba(0,0,0,.22)}
+.edit-overlay button{background:white;border:none;border-radius:50px;
+  padding:6px 13px;font-family:var(--font);font-weight:900;font-size:.78rem;
+  cursor:pointer;transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.18);
+  opacity:0;transform:translateY(6px);pointer-events:none}
+body.edit-mode .card:hover .edit-overlay button{opacity:1;transform:translateY(0);pointer-events:auto}
+.btn-edit-card{color:var(--blue)}.btn-edit-card:hover{background:var(--blue)!important;color:white!important}
+.btn-del-card{color:var(--red)}.btn-del-card:hover{background:var(--red)!important;color:white!important}
+.drag-handle{position:absolute;top:5px;left:6px;color:#bbb;font-size:1rem;
+  display:none;cursor:grab;padding:4px;line-height:1}
+body.edit-mode .drag-handle{display:block}
+
+/* Sentence Tray */
+#tray{position:fixed;bottom:0;left:0;right:0;background:white;
+  border-top:4px solid #eee;box-shadow:0 -6px 30px rgba(0,0,0,.1);
+  z-index:50;padding:9px 14px 13px;min-height:var(--tray-h);display:flex;flex-direction:column}
+#tray-label{font-size:.76rem;font-weight:800;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+#tray-words{display:flex;flex-wrap:wrap;gap:7px;flex:1;min-height:46px;align-items:center}
+.tray-empty{color:#ccc;font-weight:800;font-size:.9rem;font-style:italic}
+.tray-chip{display:flex;align-items:center;gap:5px;background:#F0FFF8;
+  border:2.5px solid var(--green);border-radius:50px;overflow:hidden;
+  font-size:.88rem;font-weight:900;color:#2e7d5e;cursor:pointer;transition:all .15s;
+  animation:chipPop .25s cubic-bezier(.175,.885,.32,1.275) both}
+.tray-chip:hover{background:#ffd5d5;border-color:var(--red);color:var(--red)}
+.tray-chip img{width:32px;height:32px;object-fit:contain;background:#f8f8f8;padding:3px}
+.tray-chip span{padding:0 10px 0 3px}
+#tray-actions{display:flex;gap:9px;margin-top:8px}
+#speak-sentence{flex:1;background:var(--green);color:white;border:none;border-radius:50px;
+  font-family:var(--font);font-size:1.05rem;font-weight:900;padding:10px 16px;
+  cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(76,175,140,.35)}
+#speak-sentence:hover{background:#3a9d75;transform:translateY(-2px)}
+#speak-sentence:disabled{background:#ccc;box-shadow:none;cursor:default;transform:none}
+#clear-sentence{background:#fff0f0;color:var(--red);border:2.5px solid var(--red);
+  border-radius:50px;font-family:var(--font);font-size:.9rem;font-weight:900;
+  padding:10px 14px;cursor:pointer;transition:all .2s}
+#clear-sentence:hover{background:var(--red);color:white}
+
+/* Modal shell */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);
+  z-index:200;display:none;align-items:flex-start;justify-content:center;
+  padding:16px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal-box{background:white;border-radius:28px;padding:24px 20px 20px;
+  width:100%;max-width:440px;margin:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+  animation:popIn .3s cubic-bezier(.175,.885,.32,1.275) both}
+.modal-box h2{font-size:1.35rem;font-weight:900;margin-bottom:14px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-weight:800;color:#555;margin-bottom:4px;font-size:.86rem}
+.form-row input,.form-row select{width:100%;padding:10px 13px;border:3px solid #eee;
+  border-radius:13px;font-family:var(--font);font-size:.98rem;font-weight:700;
+  outline:none;transition:border-color .2s}
+.form-row input:focus,.form-row select:focus{border-color:var(--orange)}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+.modal-btns button{flex:1;padding:11px;border-radius:50px;font-family:var(--font);
+  font-size:.92rem;font-weight:900;cursor:pointer;transition:all .2s;border:none}
+.btn-save{background:var(--orange);color:white;box-shadow:0 4px 14px rgba(255,107,53,.3)}
+.btn-save:hover{background:#e85a24}
+.btn-cancel{background:#f5f5f5;color:#888}.btn-cancel:hover{background:#eee}
+.btn-danger{background:#fff0f0;color:var(--red);border:2px solid var(--red)!important;flex:0 0 auto!important;padding:11px 14px!important}
+.btn-danger:hover{background:var(--red);color:white}
+
+/* Photo area inside word modal */
+#photo-area{width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;
+  background:#f0f0f0;margin-bottom:10px;display:flex;align-items:center;
+  justify-content:center;position:relative}
+#photo-preview{width:100%;height:100%;object-fit:contain;background:#f8f8f8;display:none}
+#photo-placeholder{text-align:center;color:#bbb;pointer-events:none}
+#photo-placeholder .ph-icon{font-size:2.4rem;display:block;margin-bottom:4px}
+#photo-placeholder .ph-txt{font-weight:800;font-size:.82rem}
+#cam-stream{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+#capture-btn{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);
+  background:white;border:3px solid var(--orange);color:var(--orange);
+  font-family:var(--font);font-weight:900;font-size:.85rem;padding:7px 18px;
+  border-radius:50px;cursor:pointer;display:none;box-shadow:0 3px 12px rgba(0,0,0,.2);z-index:2}
+#retake-btn{position:absolute;top:7px;right:7px;background:rgba(0,0,0,.55);color:white;
+  border:none;border-radius:50px;font-family:var(--font);font-weight:900;
+  font-size:.75rem;padding:5px 10px;cursor:pointer;display:none;z-index:2}
+.photo-btns{display:flex;gap:7px;margin-bottom:10px}
+.photo-btn{flex:1;padding:9px 5px;border-radius:13px;border:3px solid var(--orange);
+  background:white;color:var(--orange);font-family:var(--font);font-weight:900;
+  font-size:.8rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;
+  justify-content:center;gap:4px}
+.photo-btn:hover{background:var(--orange);color:white}
+#file-input,#capture-canvas{display:none}
+
+/* Web image search */
+.web-search-row{display:flex;gap:7px;margin-bottom:10px}
+.web-search-row input{flex:1;padding:9px 12px;border:3px solid var(--blue);
+  border-radius:13px;font-family:var(--font);font-size:.9rem;font-weight:700;outline:none}
+.web-search-row button{padding:9px 14px;border:none;background:var(--blue);color:white;
+  border-radius:13px;font-family:var(--font);font-weight:900;font-size:.85rem;
+  cursor:pointer;transition:all .2s;white-space:nowrap}
+.web-search-row button:hover{background:#3a72e8}
+#web-results{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  margin-bottom:10px;max-height:160px;overflow-y:auto}
+#web-results img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;
+  cursor:pointer;border:3px solid transparent;transition:all .15s;background:#f0f0f0}
+#web-results img:hover{border-color:var(--blue);transform:scale(1.05)}
+#web-results img.selected{border-color:var(--green);outline:2px solid var(--green)}
+#web-search-status{font-size:.78rem;color:#aaa;font-weight:700;margin-bottom:6px;min-height:16px}
+.section-divider{display:flex;align-items:center;gap:8px;margin:8px 0}
+.section-divider span{color:#ccc;font-weight:800;font-size:.78rem;white-space:nowrap}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:2px;background:#eee}
+
+/* Voice panel */
+#voice-panel{z-index:300}
+.voice-box h2{color:var(--blue)}
+.voice-option{display:flex;align-items:center;gap:11px;padding:12px 13px;
+  border-radius:13px;border:3px solid #eee;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.voice-option:hover{border-color:var(--blue);background:#f0f5ff}
+.voice-option.selected{border-color:var(--blue);background:#EBF2FF}
+.v-icon{font-size:1.6rem}.v-info{flex:1}
+.v-name{font-weight:900;font-size:.92rem;color:#333}
+.v-desc{font-size:.76rem;color:#888;font-weight:700}
+.v-check{font-size:1.1rem;color:var(--blue);opacity:0}
+.voice-option.selected .v-check{opacity:1}
+#voice-close{width:100%;margin-top:13px;padding:11px;border-radius:50px;
+  background:var(--blue);color:white;border:none;font-family:var(--font);
+  font-size:.98rem;font-weight:900;cursor:pointer;transition:all .2s}
+#voice-close:hover{background:#3a72e8}
+
+/* Password modal */
+#pwd-modal{z-index:400}
+#pwd-modal .modal-box h2{color:var(--purple)}
+#pwd-input{letter-spacing:4px;font-size:1.2rem;text-align:center}
+#pwd-error{color:var(--red);font-weight:800;font-size:.82rem;min-height:16px;margin-bottom:3px}
+
+/* Category colour swatches */
+.cat-color-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:5px}
+.cat-swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;
+  border:3px solid transparent;transition:all .15s;flex-shrink:0}
+.cat-swatch.sel,.cat-swatch:hover{border-color:#333;transform:scale(1.18)}
+
+/* Speaking banner */
+#banner{position:fixed;top:18px;left:50%;
+  transform:translateX(-50%) translateY(-110px);
+  background:var(--orange);color:white;padding:11px 26px;border-radius:50px;
+  font-size:1.3rem;font-weight:900;box-shadow:0 8px 26px rgba(255,107,53,.4);
+  transition:transform .35s cubic-bezier(.175,.885,.32,1.275);
+  z-index:500;pointer-events:none;max-width:88vw;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#banner.show{transform:translateX(-50%) translateY(0)}
+
+@keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:scale(1)}}
+@keyframes chipPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes imgBounce{from{transform:scale(1)}to{transform:scale(1.08)}}
+.card:nth-child(1){animation-delay:.03s}.card:nth-child(2){animation-delay:.06s}
+.card:nth-child(3){animation-delay:.09s}.card:nth-child(4){animation-delay:.12s}
+.card:nth-child(5){animation-delay:.15s}.card:nth-child(6){animation-delay:.18s}
+.card:nth-child(7){animation-delay:.21s}.card:nth-child(8){animation-delay:.24s}
+.card:nth-child(9){animation-delay:.27s}.card:nth-child(10){animation-delay:.30s}
+.card:nth-child(11){animation-delay:.33s}.card:nth-child(12){animation-delay:.36s}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌟 Lern App</h1>
+  <div class="hbtns">
+    <button class="hbtn blue"   id="voice-btn">🔊 Stimme</button>
+    <button class="hbtn green"  id="add-btn">➕ Wort</button>
+    <button class="hbtn purple" id="add-cat-btn">📁 Kategorie</button>
+    <button class="hbtn"        id="edit-mode-btn">✏️ Bearbeiten</button>
+    <button class="hbtn"        id="backup-btn"  style="border-color:#20b2aa;color:#20b2aa" title="Alle Daten als Datei speichern">💾 Backup</button>
+    <button class="hbtn"        id="restore-btn" style="border-color:#20b2aa;color:#20b2aa" title="Backup-Datei laden">📂 Laden</button>
+    <button class="hbtn"        id="export-html-btn" style="border-color:#e91e8c;color:#e91e8c" title="Alle Karten als druckbare HTML-Seite exportieren">🖨️ Drucken</button>
+  </div>
+</header>
+<!-- tiny auto-save dot -->
+<div id="save-dot" style="position:fixed;top:10px;right:10px;width:10px;height:10px;
+  border-radius:50%;background:#4CAF8C;opacity:0;transition:opacity .4s;z-index:999;
+  pointer-events:none" title="Gespeichert"></div>
+
+<div class="tabs" id="tabs"></div>
+<div class="grid" id="grid"></div>
+
+<!-- Sentence Tray -->
+<div id="tray">
+  <div id="tray-label">✏️ Mein Satz</div>
+  <div id="tray-words"></div>
+  <div id="tray-actions">
+    <button id="speak-sentence" disabled>🔊 Vorlesen!</button>
+    <button id="clear-sentence">🗑️ Löschen</button>
+  </div>
+</div>
+
+<div id="banner"></div>
+
+<!-- PASSWORD MODAL -->
+<div class="modal-overlay" id="pwd-modal">
+  <div class="modal-box" style="max-width:340px">
+    <h2>🔐 Passwort</h2>
+    <p id="pwd-reason" style="color:#888;font-size:.88rem;font-weight:700;margin-bottom:12px"></p>
+    <div class="form-row">
+      <label>Passwort eingeben</label>
+      <input type="password" id="pwd-input" placeholder="••••••" autocomplete="off">
+    </div>
+    <div id="pwd-error"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="pwd-cancel">Abbrechen</button>
+      <button class="btn-save" style="background:var(--purple)" id="pwd-ok">OK ✓</button>
+    </div>
+    <p style="color:#ddd;font-size:.72rem;font-weight:700;margin-top:10px;text-align:center">
+      Standard-Passwort: <strong>1234</strong>
+    </p>
+  </div>
+</div>
+
+<!-- VOICE PANEL -->
+<div class="modal-overlay" id="voice-panel">
+  <div class="modal-box voice-box">
+    <h2>🔊 Stimme wählen</h2>
+    <p style="color:#999;font-size:.86rem;font-weight:700;margin-bottom:14px">Wie soll die App sprechen?</p>
+    <div id="voice-list"></div>
+    <button id="voice-close">✓ Fertig</button>
+  </div>
+</div>
+
+<!-- WORD MODAL -->
+<div class="modal-overlay" id="word-modal">
+  <div class="modal-box">
+    <h2 id="word-modal-title">📸 Neues Wort</h2>
+
+    <!-- Photo preview area -->
+    <div id="photo-area">
+      <img id="photo-preview" alt="Vorschau">
+      <video id="cam-stream" autoplay playsinline></video>
+      <button id="capture-btn">📸 Foto machen</button>
+      <button id="retake-btn">↩ Neu</button>
+      <div id="photo-placeholder">
+        <span class="ph-icon">🖼️</span>
+        <span class="ph-txt">Kein Foto gewählt</span>
+      </div>
+    </div>
+
+    <!-- Camera / Gallery buttons -->
+    <div class="photo-btns">
+      <button class="photo-btn" id="btn-camera">📷 Kamera</button>
+      <button class="photo-btn" id="btn-upload">🗂️ Galerie</button>
+    </div>
+    <input type="file" id="file-input" accept="image/*">
+    <canvas id="capture-canvas"></canvas>
+
+    <!-- Web image search -->
+    <div class="section-divider"><span>oder im Web suchen</span></div>
+    <div class="web-search-row">
+      <input type="text" id="web-search-inp" placeholder="z.B. Apfel, Hund …">
+      <button id="web-search-btn">🔍 Suchen</button>
+    </div>
+    <div id="web-search-status"></div>
+    <div id="web-results"></div>
+
+    <div class="section-divider"><span>Wort & Kategorie</span></div>
+    <div class="form-row">
+      <label>Deutsches Wort <span style="color:#bbb;font-weight:700">(optional)</span></label>
+      <input id="inp-word" type="text" placeholder="z.B. Apfel — kann später ergänzt werden">
+    </div>
+    <div class="form-row">
+      <label>Kategorie</label>
+      <select id="inp-cat"></select>
+    </div>
+    <div class="modal-btns" id="word-modal-btns">
+      <button class="btn-cancel" id="word-cancel">Abbrechen</button>
+      <button class="btn-save"   id="word-save">Speichern ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-overlay" id="cat-modal">
+  <div class="modal-box">
+    <h2 id="cat-modal-title">📁 Neue Kategorie</h2>
+    <div class="form-row">
+      <label>Name der Kategorie</label>
+      <input id="cat-name-inp" type="text" placeholder="z.B. Farben">
+    </div>
+    <div class="form-row">
+      <label>Farbe</label>
+      <div class="cat-color-row" id="cat-color-row"></div>
+    </div>
+    <div class="modal-btns" id="cat-modal-btns">
+      <button class="btn-cancel" id="cat-cancel">Abbrechen</button>
+      <button class="btn-save"   id="cat-save">Speichern ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+const ADMIN_PASSWORD = '1234'; // ← change here
+
+const CAT_COLOURS = [
+  '#FF6B35','#4CAF8C','#5B8FFF','#C76BF5',
+  '#FF9800','#00BCD4','#E91E63','#8BC34A',
+  '#FF5722','#3F51B5','#009688','#795548'
+];
+
+// ═══════════════════════════════════════════════
+// IMAGE LIBRARY  (corrected illustrated icons)
+// ═══════════════════════════════════════════════
+const IMG = {
+  'Apfel':        'https://cdn-icons-png.flaticon.com/512/415/415733.png',
+  'Banane':       'https://cdn-icons-png.flaticon.com/512/2909/2909761.png',
+  'Orange':       'https://cdn-icons-png.flaticon.com/512/2909/2909765.png',
+  'Erdbeere':     'https://cdn-icons-png.flaticon.com/512/2909/2909750.png',
+  'Karotte':      'https://cdn-icons-png.flaticon.com/512/2909/2909787.png',
+  'Brokkoli':     'https://cdn-icons-png.flaticon.com/512/2909/2909780.png',
+  'Brot':         'https://cdn-icons-png.flaticon.com/512/3082/3082038.png',
+  'Milch':        'https://cdn-icons-png.flaticon.com/512/2674/2674487.png',
+  'Käse':         'https://cdn-icons-png.flaticon.com/512/3082/3082003.png',
+  'Ei':           'https://cdn-icons-png.flaticon.com/512/2674/2674459.png',
+  'Kuchen':       'https://cdn-icons-png.flaticon.com/512/3082/3082055.png',
+  'Eis':          'https://cdn-icons-png.flaticon.com/512/938/938063.png',
+  'Hund':         'https://cdn-icons-png.flaticon.com/512/616/616554.png',
+  'Katze':        'https://cdn-icons-png.flaticon.com/512/616/616430.png',
+  'Hase':         'https://cdn-icons-png.flaticon.com/512/616/616456.png',
+  'Bär':          'https://cdn-icons-png.flaticon.com/512/616/616408.png',
+  'Elefant':      'https://cdn-icons-png.flaticon.com/512/616/616447.png',
+  'Löwe':         'https://cdn-icons-png.flaticon.com/512/616/616494.png',
+  'Pinguin':      'https://cdn-icons-png.flaticon.com/512/616/616510.png',
+  'Frosch':       'https://cdn-icons-png.flaticon.com/512/616/616452.png',
+  'Kuh':          'https://cdn-icons-png.flaticon.com/512/616/616438.png',
+  'Huhn':         'https://cdn-icons-png.flaticon.com/512/616/616425.png',
+  'Fisch':        'https://cdn-icons-png.flaticon.com/512/616/616449.png',
+  'Schmetterling':'https://cdn-icons-png.flaticon.com/512/616/616522.png',
+  'Haus':         'https://cdn-icons-png.flaticon.com/512/602/602175.png',
+  'Auto':         'https://cdn-icons-png.flaticon.com/512/743/743931.png',
+  'Flugzeug':     'https://cdn-icons-png.flaticon.com/512/870/870177.png',
+  'Zug':          'https://cdn-icons-png.flaticon.com/512/1068/1068928.png',
+  'Buch':         'https://cdn-icons-png.flaticon.com/512/2702/2702154.png',
+  'Ball':         'https://cdn-icons-png.flaticon.com/512/1099/1099680.png',
+  'Sonne':        'https://cdn-icons-png.flaticon.com/512/869/869869.png',
+  'Mond':         'https://cdn-icons-png.flaticon.com/512/740/740878.png',
+  'Stern':        'https://cdn-icons-png.flaticon.com/512/1828/1828884.png',
+  'Regenbogen':   'https://cdn-icons-png.flaticon.com/512/1164/1164954.png',
+  'Auge':         'https://cdn-icons-png.flaticon.com/512/3998/3998743.png',
+  'Ohr':          'https://cdn-icons-png.flaticon.com/512/3209/3209265.png',
+  'Nase':         'https://cdn-icons-png.flaticon.com/512/3998/3998773.png',
+  'Mund':         'https://cdn-icons-png.flaticon.com/512/3998/3998766.png',
+  'Zahn':         'https://cdn-icons-png.flaticon.com/512/2913/2913462.png',
+  'Hand':         'https://cdn-icons-png.flaticon.com/512/1421/1421585.png',
+  'Fuß':          'https://cdn-icons-png.flaticon.com/512/3591/3591370.png',
+  'Herz':         'https://cdn-icons-png.flaticon.com/512/833/833472.png',
+  'Kopf':         'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+  'Bein':         'https://cdn-icons-png.flaticon.com/512/3209/3209272.png',
+  'Bauch':        'https://cdn-icons-png.flaticon.com/512/3209/3209272.png',
+};
+
+function imgFor(word){
+  return IMG[word] || 'https://cdn-icons-png.flaticon.com/512/1828/1828884.png';
+}
+
+// ═══════════════════════════════════════════════
+// DEFAULT DATA
+// ═══════════════════════════════════════════════
+const defaultVocab = {
+  Essen:   [{word:'Apfel'},{word:'Banane'},{word:'Orange'},{word:'Erdbeere'},
+            {word:'Karotte'},{word:'Brokkoli'},{word:'Brot'},{word:'Milch'},
+            {word:'Käse'},{word:'Ei'},{word:'Kuchen'},{word:'Eis'}],
+  Tiere:   [{word:'Hund'},{word:'Katze'},{word:'Hase'},{word:'Bär'},
+            {word:'Elefant'},{word:'Löwe'},{word:'Pinguin'},{word:'Frosch'},
+            {word:'Kuh'},{word:'Huhn'},{word:'Fisch'},{word:'Schmetterling'}],
+  Dinge:   [{word:'Haus'},{word:'Auto'},{word:'Flugzeug'},{word:'Zug'},
+            {word:'Buch'},{word:'Ball'},{word:'Sonne'},{word:'Mond'},
+            {word:'Stern'},{word:'Regenbogen'}],
+  Koerper: [{word:'Auge'},{word:'Ohr'},{word:'Nase'},{word:'Mund'},
+            {word:'Zahn'},{word:'Hand'},{word:'Fuß'},{word:'Herz'},
+            {word:'Kopf'},{word:'Bein'},{word:'Bauch'}],
+};
+const defaultMeta = {
+  Essen:   {label:'Essen',   colour:'#FF6B35'},
+  Tiere:   {label:'Tiere',   colour:'#4CAF8C'},
+  Dinge:   {label:'Dinge',   colour:'#5B8FFF'},
+  Koerper: {label:'Körper',  colour:'#C76BF5'},
+};
+
+// ═══════════════════════════════════════════════
+// STORAGE  — localStorage (auto, all devices)
+//           + JSON export/import for backup
+// ═══════════════════════════════════════════════
+const LS_VOCAB = 'la_v5_vocab';
+const LS_META  = 'la_v5_meta';
+
+function loadLocal(){
+  try{
+    const v=localStorage.getItem(LS_VOCAB);
+    const m=localStorage.getItem(LS_META);
+    return {
+      vocab:   v?JSON.parse(v):JSON.parse(JSON.stringify(defaultVocab)),
+      catMeta: m?JSON.parse(m):JSON.parse(JSON.stringify(defaultMeta)),
+    };
+  }catch(e){
+    return {vocab:JSON.parse(JSON.stringify(defaultVocab)),catMeta:JSON.parse(JSON.stringify(defaultMeta))};
+  }
+}
+
+function save(){
+  try{
+    localStorage.setItem(LS_VOCAB, JSON.stringify(vocab));
+    localStorage.setItem(LS_META,  JSON.stringify(catMeta));
+    flashSave();
+  }catch(e){
+    // localStorage full (too many large photos) — warn user
+    showToast('⚠️ Speicher fast voll! Bitte Backup erstellen und einige Fotos löschen.','#FF6B35',6000);
+  }
+}
+
+// ── tiny save flash indicator ──
+function flashSave(){
+  const el=document.getElementById('save-dot');
+  if(!el) return;
+  el.style.opacity='1';
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.style.opacity='0',1400);
+}
+
+// ── toast notification ──
+function showToast(msg, bg, dur=2800){
+  let t=document.getElementById('toast');
+  if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+  t.textContent=msg;
+  t.style.cssText=`position:fixed;bottom:180px;left:50%;transform:translateX(-50%);
+    background:${bg||'#333'};color:white;padding:10px 22px;border-radius:50px;
+    font-family:var(--font);font-weight:800;font-size:.88rem;z-index:600;
+    box-shadow:0 4px 18px rgba(0,0,0,.25);text-align:center;max-width:88vw;
+    animation:popIn .3s cubic-bezier(.175,.885,.32,1.275)`;
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.remove(),dur);
+}
+
+// ── EXPORT: download lernapp_backup.json ──
+function exportBackup(){
+  const data = { version:5, exported: new Date().toISOString(),
+                 categories: catMeta, vocab };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url;
+  a.download='lernapp_backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Backup heruntergeladen!','#4CAF8C');
+}
+
+// ── IMPORT: load from a backup file ──
+function importBackup(){
+  const fi=document.createElement('input');
+  fi.type='file'; fi.accept='.json,application/json';
+  fi.addEventListener('change',e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        // Accept both {vocab,categories} and legacy {vocab,catMeta}
+        const newVocab = data.vocab;
+        const newMeta  = data.categories || data.catMeta;
+        if(!newVocab || typeof newVocab!=='object') throw new Error('Ungültige Datei');
+        if(confirm(`Backup vom ${data.exported ? new Date(data.exported).toLocaleString('de') : 'unbekannten Datum'} laden?\n\nAlle aktuellen Daten werden überschrieben.`)){
+          vocab   = newVocab;
+          catMeta = newMeta || JSON.parse(JSON.stringify(defaultMeta));
+          save();
+          currentCat=Object.keys(vocab)[0]||'Essen';
+          buildTabs(); renderGrid(); renderTray();
+          showToast('✅ Backup erfolgreich geladen!','#4CAF8C');
+        }
+      }catch(err){
+        showToast('❌ Fehler: Ungültige Backup-Datei','#e74c3c',4000);
+      }
+    };
+    r.readAsText(file);
+  });
+  fi.click();
+}
+
+let {vocab,catMeta}=loadLocal();
+let currentCat=Object.keys(vocab)[0];
+let sentence=[];
+let isEditMode=false;
+let voiceMode=localStorage.getItem('la_voicemode')||'normal';
+let availVoices=[];
+speechSynthesis.onvoiceschanged=()=>{availVoices=speechSynthesis.getVoices();};
+setTimeout(()=>{availVoices=speechSynthesis.getVoices();},600);
+
+// ═══════════════════════════════════════════════
+// PASSWORD
+// ═══════════════════════════════════════════════
+let _pwdCb=null;
+function requirePwd(reason,cb){
+  document.getElementById('pwd-reason').textContent=reason;
+  document.getElementById('pwd-input').value='';
+  document.getElementById('pwd-error').textContent='';
+  _pwdCb=cb;
+  openM('pwd-modal');
+}
+document.getElementById('pwd-ok').addEventListener('click',()=>{
+  if(document.getElementById('pwd-input').value===ADMIN_PASSWORD){
+    closeM('pwd-modal'); if(_pwdCb){_pwdCb();_pwdCb=null;}
+  } else {
+    document.getElementById('pwd-error').textContent='❌ Falsches Passwort!';
+    document.getElementById('pwd-input').value='';
+    document.getElementById('pwd-input').focus();
+  }
+});
+document.getElementById('pwd-cancel').addEventListener('click',()=>closeM('pwd-modal'));
+document.getElementById('pwd-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('pwd-ok').click();});
+
+// ═══════════════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════════════
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)closeM(o.id);});
+});
+
+// ═══════════════════════════════════════════════
+// EDIT MODE
+// ═══════════════════════════════════════════════
+document.getElementById('edit-mode-btn').addEventListener('click',()=>{
+  if(!isEditMode){
+    requirePwd('Bearbeiten freischalten',()=>{
+      isEditMode=true;
+      document.body.classList.add('edit-mode');
+      document.getElementById('edit-mode-btn').textContent='✓ Fertig';
+      document.getElementById('edit-mode-btn').classList.add('active-edit');
+    });
+  } else {
+    isEditMode=false;
+    document.body.classList.remove('edit-mode');
+    document.getElementById('edit-mode-btn').textContent='✏️ Bearbeiten';
+    document.getElementById('edit-mode-btn').classList.remove('active-edit');
+  }
+});
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+function buildTabs(){
+  const el=document.getElementById('tabs');
+  el.innerHTML='';
+  Object.keys(vocab).forEach(cat=>{
+    const meta=catMeta[cat]||{label:cat,colour:'#999'};
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;align-items:center;gap:4px';
+
+    const btn=document.createElement('button');
+    btn.className='tab'+(cat===currentCat?' active':'');
+    btn.dataset.cat=cat;
+    btn.textContent=meta.label;
+    if(cat===currentCat){btn.style.background=meta.colour;btn.style.color='white';}
+    btn.addEventListener('click',()=>switchCat(cat));
+    btn.addEventListener('mouseover',()=>{if(cat!==currentCat){btn.style.background=meta.colour;btn.style.color='white';}});
+    btn.addEventListener('mouseout',()=>{if(cat!==currentCat){btn.style.background='white';btn.style.color='#555';}});
+
+    const eb=document.createElement('button');
+    eb.className='tab-edit-btn'; eb.title='Kategorie bearbeiten'; eb.textContent='✎';
+    eb.addEventListener('click',e=>{e.stopPropagation();openCatModal(cat);});
+
+    wrap.appendChild(btn); wrap.appendChild(eb); el.appendChild(wrap);
+  });
+}
+function switchCat(cat){currentCat=cat;buildTabs();renderGrid();}
+
+// ═══════════════════════════════════════════════
+// GRID
+// ═══════════════════════════════════════════════
+function getImgSrc(item){return item.photo||imgFor(item.word||'');}
+
+function renderGrid(){
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  (vocab[currentCat]||[]).forEach((item,idx)=>{
+    grid.appendChild(buildCard(item,idx));
+  });
+}
+
+function buildCard(item,idx){
+  const inSent=sentence.some(s=>s._id===item._id);
+  const card=document.createElement('div');
+  card.className='card'+(inSent?' in-sentence':'');
+  card.draggable=true; card.dataset.idx=idx;
+
+  // Drag handle
+  const handle=document.createElement('div');
+  handle.className='drag-handle'; handle.textContent='⠿';
+
+  // Badge
+  const badge=document.createElement('div');
+  badge.className='badge'; badge.textContent='✓';
+
+  // Image
+  const img=document.createElement('img');
+  img.className='card-img'; img.alt=item.word||'';
+  img.src=getImgSrc(item); img.loading='lazy';
+
+  // Label
+  const label=document.createElement('div');
+  const hasWord=item.word&&item.word.trim();
+  label.className='card-label'+(hasWord?'':' empty');
+  label.textContent=hasWord?item.word:'(kein Wort)';
+
+  // Edit overlay
+  const overlay=document.createElement('div');
+  overlay.className='edit-overlay';
+  const editBtn=document.createElement('button');
+  editBtn.className='btn-edit-card'; editBtn.textContent='✎ Bearbeiten';
+  const delBtn=document.createElement('button');
+  delBtn.className='btn-del-card'; delBtn.textContent='🗑 Löschen';
+  overlay.appendChild(editBtn); overlay.appendChild(delBtn);
+
+  card.appendChild(handle); card.appendChild(badge); card.appendChild(img);
+  card.appendChild(label);  card.appendChild(overlay);
+
+  // Tap
+  card.addEventListener('click',e=>{
+    if(isEditMode) return;
+    if(overlay.contains(e.target)) return;
+    addToSentence(item,card);
+    if(hasWord) speakWord(item.word,card);
+  });
+
+  editBtn.addEventListener('click',e=>{e.stopPropagation();openWordModal({editCat:currentCat,editIdx:idx,item});});
+  delBtn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const lbl=item.word||'dieses Wort';
+    if(confirm('"'+lbl+'" wirklich löschen?')){
+      vocab[currentCat].splice(idx,1); save(); renderGrid();
+    }
+  });
+
+  // Drag & drop
+  card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',idx);card.classList.add('dragging');});
+  card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+  card.addEventListener('dragover',e=>{e.preventDefault();card.classList.add('drag-over');});
+  card.addEventListener('dragleave',()=>card.classList.remove('drag-over'));
+  card.addEventListener('drop',e=>{
+    e.preventDefault(); card.classList.remove('drag-over');
+    const from=parseInt(e.dataTransfer.getData('text/plain')),to=idx;
+    if(from===to) return;
+    const [m]=vocab[currentCat].splice(from,1);
+    vocab[currentCat].splice(to,0,m);
+    save(); renderGrid();
+  });
+
+  return card;
+}
+
+// ═══════════════════════════════════════════════
+// SENTENCE TRAY
+// ═══════════════════════════════════════════════
+function addToSentence(item,card){
+  sentence.push({word:item.word||'',photo:getImgSrc(item),_id:item._id});
+  if(card)card.classList.add('in-sentence');
+  renderTray();
+}
+function renderTray(){
+  const tw=document.getElementById('tray-words');
+  const sb=document.getElementById('speak-sentence');
+  tw.innerHTML='';
+  if(!sentence.length){
+    tw.innerHTML='<span class="tray-empty">Tippe auf Bilder um einen Satz zu bauen …</span>';
+    sb.disabled=true; return;
+  }
+  sb.disabled=false;
+  sentence.forEach((item,i)=>{
+    const chip=document.createElement('div');
+    chip.className='tray-chip';
+    chip.innerHTML=`<img src="${item.photo}" alt="${item.word}"><span>${item.word||'?'}</span>`;
+    chip.addEventListener('click',()=>{sentence.splice(i,1);renderTray();renderGrid();});
+    tw.appendChild(chip);
+  });
+}
+document.getElementById('speak-sentence').addEventListener('click',()=>{
+  const words=sentence.map(s=>s.word).filter(Boolean);
+  if(words.length) speakText(words.join(' '));
+});
+document.getElementById('clear-sentence').addEventListener('click',()=>{sentence=[];renderTray();renderGrid();});
+
+// ═══════════════════════════════════════════════
+// SPEECH
+// ═══════════════════════════════════════════════
+function getDeVoice(female){
+  const vs=availVoices.length?availVoices:speechSynthesis.getVoices();
+  const de=vs.filter(v=>v.lang&&v.lang.startsWith('de'));
+  if(female){const f=de.find(v=>/female|anna|sarah|angela|petra|frau/i.test(v.name));return f||de[0]||null;}
+  return de[0]||null;
+}
+function applyVoice(u){
+  if(voiceMode==='robot'){u.pitch=0.1;u.rate=0.8;const v=getDeVoice(false);if(v)u.voice=v;}
+  else if(voiceMode==='female'){u.pitch=1.25;u.rate=0.85;const v=getDeVoice(true);if(v)u.voice=v;}
+  else{u.pitch=1.0;u.rate=0.82;const v=getDeVoice(false);if(v)u.voice=v;}
+}
+let _bt=null;
+function showBanner(t){clearTimeout(_bt);const b=document.getElementById('banner');b.textContent=t;b.classList.add('show');_bt=setTimeout(hideBanner,5000);}
+function hideBanner(){document.getElementById('banner').classList.remove('show');}
+function speakWord(word,card){
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(word);u.lang='de-DE';applyVoice(u);
+  if(card){card.classList.add('speaking');showBanner(word);u.onend=u.onerror=()=>{card.classList.remove('speaking');hideBanner();};}
+  speechSynthesis.speak(u);
+}
+function speakText(text){
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang='de-DE';applyVoice(u);
+  if(voiceMode==='robot')u.rate=0.75; else u.rate=0.78;
+  showBanner(text);u.onend=u.onerror=hideBanner;speechSynthesis.speak(u);
+}
+
+// ═══════════════════════════════════════════════
+// VOICE PANEL
+// ═══════════════════════════════════════════════
+const VOICE_MODES=[
+  {id:'normal',icon:'🗣️',name:'Normale Stimme',desc:'Deutsch, langsam und klar'},
+  {id:'female',icon:'👩',name:'Weibliche Stimme',desc:'Freundlich & klar'},
+  {id:'robot', icon:'🤖',name:'Roboter-Stimme', desc:'Tief & mechanisch'},
+];
+document.getElementById('voice-btn').addEventListener('click',()=>{
+  const list=document.getElementById('voice-list'); list.innerHTML='';
+  VOICE_MODES.forEach(m=>{
+    const d=document.createElement('div');
+    d.className='voice-option'+(voiceMode===m.id?' selected':'');
+    d.innerHTML=`<div class="v-icon">${m.icon}</div><div class="v-info"><div class="v-name">${m.name}</div><div class="v-desc">${m.desc}</div></div><div class="v-check">✓</div>`;
+    d.addEventListener('click',()=>{
+      voiceMode=m.id;localStorage.setItem('la_voicemode',voiceMode);
+      list.querySelectorAll('.voice-option').forEach(o=>o.classList.remove('selected'));
+      d.classList.add('selected');
+      speakWord('Hallo',{classList:{add:()=>{},remove:()=>{}}});
+    });
+    list.appendChild(d);
+  });
+  openM('voice-panel');
+});
+document.getElementById('voice-close').addEventListener('click',()=>closeM('voice-panel'));
+
+// ═══════════════════════════════════════════════
+// WORD MODAL
+// ═══════════════════════════════════════════════
+// KEY FIX: photoState holds photo data independently from UI resets
+let photoState = null;   // null = no custom photo; string = base64 or URL
+let camStream  = null;
+let wordMode   = 'add';
+let wEditCat   = null;
+let wEditIdx   = null;
+
+const photoPreviewEl = document.getElementById('photo-preview');
+const photoPlaceEl   = document.getElementById('photo-placeholder');
+const camStreamEl    = document.getElementById('cam-stream');
+const captureBtnEl   = document.getElementById('capture-btn');
+const retakeBtnEl    = document.getElementById('retake-btn');
+const canvasEl       = document.getElementById('capture-canvas');
+const fileInputEl    = document.getElementById('file-input');
+
+// ── Resize any image source to max 320×320px, JPEG quality 0.70 ──
+// Approximate sizes in the JSON backup:
+//   Camera photo at full res  → ~300-600 KB per image
+//   After resize to 320px     → ~15-25 KB per image  (≈20x smaller)
+//   100 custom photos         → ~2 MB total backup file
+const MAX_PX = 200;
+function resizeToJpeg(source, cb){
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  let w = source.videoWidth || source.naturalWidth || source.width || 320;
+  let h = source.videoHeight || source.naturalHeight || source.height || 320;
+  if(w > h){ if(w>MAX_PX){h=Math.round(h*MAX_PX/w);w=MAX_PX;} }
+  else      { if(h>MAX_PX){w=Math.round(w*MAX_PX/h);h=MAX_PX;} }
+  c.width=w; c.height=h;
+  ctx.drawImage(source,0,0,w,h);
+  cb(c.toDataURL('image/jpeg', 0.70));
+}
+
+function showPhoto(src){
+  photoState=src;
+  photoPreviewEl.src=src; photoPreviewEl.style.display='block';
+  photoPlaceEl.style.display='none';
+  camStreamEl.style.display='none';
+  captureBtnEl.style.display='none';
+  retakeBtnEl.style.display='block';
+  stopCam();
+}
+function clearPhotoUI(){
+  // Does NOT reset photoState — call resetPhoto() for that
+  photoPreviewEl.style.display='none'; photoPreviewEl.src='';
+  photoPlaceEl.style.display='flex';
+  camStreamEl.style.display='none';
+  captureBtnEl.style.display='none'; retakeBtnEl.style.display='none';
+}
+function resetPhoto(){photoState=null;clearPhotoUI();stopCam();}
+function stopCam(){if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}}
+
+function openWordModal(opts={}){
+  wordMode = opts.editIdx!==undefined?'edit':'add';
+  wEditCat = opts.editCat||currentCat;
+  wEditIdx = opts.editIdx!==undefined?opts.editIdx:null;
+
+  document.getElementById('word-modal-title').textContent = wordMode==='edit'?'✎ Wort bearbeiten':'📸 Neues Wort';
+  document.getElementById('inp-word').value = opts.item?opts.item.word||'':'';
+
+  // Populate category select
+  const sel=document.getElementById('inp-cat'); sel.innerHTML='';
+  Object.keys(vocab).forEach(cat=>{
+    const o=document.createElement('option');
+    o.value=cat; o.textContent=(catMeta[cat]||{label:cat}).label;
+    if(cat===wEditCat)o.selected=true;
+    sel.appendChild(o);
+  });
+
+  // Set photo state FIRST, then update UI
+  if(opts.item && opts.item.photo){
+    photoState = opts.item.photo;
+    clearPhotoUI();
+    photoPreviewEl.src=photoState; photoPreviewEl.style.display='block';
+    photoPlaceEl.style.display='none'; retakeBtnEl.style.display='block';
+  } else if(opts.item && opts.item.word){
+    // Show library image as reference but keep photoState=null (not a custom photo)
+    photoState = null;
+    clearPhotoUI();
+    photoPreviewEl.src=imgFor(opts.item.word); photoPreviewEl.style.display='block';
+    photoPlaceEl.style.display='none';
+    // No retake button — this is just the auto-icon
+  } else {
+    resetPhoto();
+  }
+
+  // Clear web search
+  document.getElementById('web-search-inp').value='';
+  document.getElementById('web-results').innerHTML='';
+  document.getElementById('web-search-status').textContent='';
+
+  // Delete button
+  const btns=document.getElementById('word-modal-btns');
+  const old=btns.querySelector('.btn-danger'); if(old)old.remove();
+  if(wordMode==='edit'){
+    const db=document.createElement('button');
+    db.className='btn-danger'; db.textContent='🗑 Löschen';
+    db.addEventListener('click',()=>{
+      const lbl=(opts.item&&opts.item.word)||'dieses Wort';
+      if(confirm('"'+lbl+'" wirklich löschen?')){
+        vocab[wEditCat].splice(wEditIdx,1);
+        save(); closeM('word-modal'); stopCam(); renderGrid();
+      }
+    });
+    btns.insertBefore(db,btns.firstChild);
+  }
+
+  openM('word-modal');
+}
+
+// Camera
+document.getElementById('btn-camera').addEventListener('click',async()=>{
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:800},height:{ideal:600}}});
+    camStreamEl.srcObject=camStream; camStreamEl.style.display='block';
+    captureBtnEl.style.display='block'; photoPlaceEl.style.display='none';
+    photoPreviewEl.style.display='none'; retakeBtnEl.style.display='none';
+  }catch(e){alert('Kamera nicht verfügbar. Bitte Kamerazugriff in Chrome-Einstellungen erlauben.');}
+});
+captureBtnEl.addEventListener('click',()=>{
+  resizeToJpeg(camStreamEl, showPhoto);
+});
+retakeBtnEl.addEventListener('click',resetPhoto);
+
+// Gallery upload
+document.getElementById('btn-upload').addEventListener('click',()=>fileInputEl.click());
+fileInputEl.addEventListener('change',e=>{
+  const file=e.target.files[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>resizeToJpeg(img, showPhoto);
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(file); fileInputEl.value='';
+});
+
+// ── Web image search (Unsplash Source — no API key needed) ──
+document.getElementById('web-search-btn').addEventListener('click',doWebSearch);
+document.getElementById('web-search-inp').addEventListener('keydown',e=>{if(e.key==='Enter')doWebSearch();});
+
+async function doWebSearch(){
+  const q=document.getElementById('web-search-inp').value.trim();
+  if(!q)return;
+  const status=document.getElementById('web-search-status');
+  const results=document.getElementById('web-results');
+  status.textContent='🔍 Suche …'; results.innerHTML='';
+
+  // Use Wikimedia Commons API — free, no CORS issues, returns real images
+  const url=`https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url|mime&iiurlwidth=200&format=json&origin=*`;
+  try{
+    const res=await fetch(url);
+    const data=await res.json();
+    const pages=data.query&&data.query.pages ? Object.values(data.query.pages) : [];
+    const imgs=pages
+      .filter(p=>p.imageinfo&&p.imageinfo[0]&&/jpeg|jpg|png|gif|webp/i.test(p.imageinfo[0].mime||''))
+      .map(p=>p.imageinfo[0].thumburl||p.imageinfo[0].url)
+      .filter(Boolean).slice(0,8);
+
+    if(!imgs.length){
+      // Fallback: use DuckDuckGo image proxy via a CORS-safe endpoint
+      status.textContent='Keine Bilder gefunden. Versuche es mit einem anderen Suchbegriff.';
+      return;
+    }
+    status.textContent=`${imgs.length} Bilder gefunden – tippe zum Auswählen:`;
+    imgs.forEach(src=>{
+      const img=document.createElement('img');
+      img.src=src; img.loading='lazy';
+      img.addEventListener('click',()=>{
+        results.querySelectorAll('img').forEach(i=>i.classList.remove('selected'));
+        img.classList.add('selected');
+        const tmp=new Image(); tmp.crossOrigin='anonymous';
+        tmp.onload=()=>{
+          try{ resizeToJpeg(tmp, showPhoto); }
+          catch(e){ showPhoto(src); } // CORS fallback: use URL directly
+        };
+        tmp.onerror=()=>showPhoto(src);
+        tmp.src=src;
+      });
+      results.appendChild(img);
+    });
+  }catch(e){
+    status.textContent='Fehler bei der Suche. Bitte Internet-Verbindung prüfen.';
+  }
+}
+
+// Save word
+document.getElementById('word-save').addEventListener('click',()=>{
+  const word=document.getElementById('inp-word').value.trim();
+  const cat=document.getElementById('inp-cat').value;
+
+  // Build entry — word is now optional
+  const entry={word: word||''};
+
+  // FIXED: use photoState (not currentPhotoData) — persists through UI resets
+  if(photoState){
+    entry.photo=photoState;
+  } else if(wordMode==='edit' && wEditIdx!==null && vocab[wEditCat][wEditIdx].photo){
+    entry.photo=vocab[wEditCat][wEditIdx].photo; // keep existing
+  }
+
+  // Give each item a stable ID for sentence tracking
+  entry._id = (wordMode==='edit' && wEditIdx!==null && vocab[wEditCat][wEditIdx]._id)
+    || Date.now()+Math.random();
+
+  if(wordMode==='edit' && wEditIdx!==null){
+    if(cat===wEditCat){
+      vocab[wEditCat][wEditIdx]=entry;
+    } else {
+      vocab[wEditCat].splice(wEditIdx,1);
+      if(!vocab[cat])vocab[cat]=[];
+      vocab[cat].push(entry);
+    }
+  } else {
+    entry._id=Date.now()+Math.random();
+    if(!vocab[cat])vocab[cat]=[];
+    vocab[cat].push(entry);
+  }
+
+  save(); closeM('word-modal'); stopCam();
+  buildTabs(); renderGrid();
+});
+
+document.getElementById('word-cancel').addEventListener('click',()=>{stopCam();closeM('word-modal');});
+document.getElementById('add-btn').addEventListener('click',()=>openWordModal());
+
+// ═══════════════════════════════════════════════
+// CATEGORY MODAL
+// ═══════════════════════════════════════════════
+let catMode='add', catKey=null, selColour=CAT_COLOURS[0];
+
+function openCatModal(editKey){
+  if(!isEditMode && editKey){
+    requirePwd('Kategorie bearbeiten',()=>_openCatModal(editKey)); return;
+  }
+  _openCatModal(editKey);
+}
+function _openCatModal(editKey){
+  catMode=editKey?'edit':'add'; catKey=editKey||null;
+  const meta=editKey?(catMeta[editKey]||{label:editKey,colour:CAT_COLOURS[0]}):{label:'',colour:CAT_COLOURS[0]};
+  document.getElementById('cat-modal-title').textContent=catMode==='edit'?'✎ Kategorie bearbeiten':'📁 Neue Kategorie';
+  document.getElementById('cat-name-inp').value=meta.label;
+  selColour=meta.colour||CAT_COLOURS[0];
+
+  const row=document.getElementById('cat-color-row'); row.innerHTML='';
+  CAT_COLOURS.forEach(c=>{
+    const s=document.createElement('div');
+    s.className='cat-swatch'+(c===selColour?' sel':'');
+    s.style.background=c;
+    s.addEventListener('click',()=>{selColour=c;row.querySelectorAll('.cat-swatch').forEach(x=>x.classList.remove('sel'));s.classList.add('sel');});
+    row.appendChild(s);
+  });
+
+  const btns=document.getElementById('cat-modal-btns');
+  const od=btns.querySelector('.btn-danger'); if(od)od.remove();
+  if(catMode==='edit'){
+    const db=document.createElement('button');
+    db.className='btn-danger'; db.textContent='🗑 Löschen';
+    db.addEventListener('click',()=>{
+      if(Object.keys(vocab).length<=1){alert('Die letzte Kategorie kann nicht gelöscht werden.');return;}
+      const cnt=(vocab[catKey]||[]).length;
+      if(confirm(`Kategorie "${meta.label}"${cnt>0?' ('+cnt+' Wörter)':''} löschen?`)){
+        delete vocab[catKey]; delete catMeta[catKey]; save(); closeM('cat-modal');
+        currentCat=Object.keys(vocab)[0]; buildTabs(); renderGrid();
+      }
+    });
+    btns.insertBefore(db,btns.firstChild);
+  }
+  openM('cat-modal');
+}
+
+document.getElementById('cat-save').addEventListener('click',()=>{
+  const name=document.getElementById('cat-name-inp').value.trim();
+  if(!name){alert('Bitte einen Namen eingeben!');return;}
+  if(catMode==='edit'&&catKey){
+    catMeta[catKey]={label:name,colour:selColour};
+  } else {
+    const key='cat_'+Date.now();
+    vocab[key]=[]; catMeta[key]={label:name,colour:selColour}; currentCat=key;
+  }
+  save(); closeM('cat-modal'); buildTabs(); renderGrid();
+});
+document.getElementById('cat-cancel').addEventListener('click',()=>closeM('cat-modal'));
+document.getElementById('add-cat-btn').addEventListener('click',()=>{
+  requirePwd('Neue Kategorie hinzufügen',()=>_openCatModal(null));
+});
+
+document.getElementById('backup-btn').addEventListener('click', exportBackup);
+document.getElementById('restore-btn').addEventListener('click', ()=>{
+  requirePwd('Backup laden (überschreibt alle aktuellen Daten)', importBackup);
+});
+document.getElementById('export-html-btn').addEventListener('click', exportHtml);
+
+// ── EXPORT TO HTML (printable card overview) ──
+function exportHtml(){
+  const date = new Date().toLocaleDateString('de', {day:'2-digit',month:'2-digit',year:'numeric'});
+
+  // Build category sections
+  let body = '';
+  Object.keys(vocab).forEach(cat => {
+    const meta  = catMeta[cat] || {label: cat, colour: '#999'};
+    const items = vocab[cat]   || [];
+    if(!items.length) return;
+
+    body += `
+      <div class="category">
+        <h2 style="color:${meta.colour};border-bottom:4px solid ${meta.colour}">${meta.label}</h2>
+        <div class="cards">`;
+
+    items.forEach(item => {
+      const word  = item.word || '(kein Wort)';
+      const photo = item.photo || imgFor(item.word || '');
+      // For built-in CDN URLs just use the URL; for base64 embed directly
+      const imgTag = `<img src="${photo}" alt="${word}">`;
+      body += `
+          <div class="card">
+            ${imgTag}
+            <div class="label">${word}</div>
+          </div>`;
+    });
+
+    body += `
+        </div>
+      </div>`;
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Lern App – Karten (${date})</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff8f0;
+         margin: 0; padding: 24px; color: #333; }
+  h1   { font-size: 1.8rem; color: #FF6B35; margin-bottom: 4px; }
+  .meta{ font-size: .85rem; color: #aaa; margin-bottom: 28px; }
+  .category { margin-bottom: 36px; page-break-inside: avoid; }
+  h2   { font-size: 1.3rem; padding-bottom: 6px; margin-bottom: 14px; }
+  .cards { display: flex; flex-wrap: wrap; gap: 14px; }
+  .card  { background: white; border-radius: 14px;
+           box-shadow: 0 4px 14px rgba(0,0,0,.1);
+           width: 110px; text-align: center;
+           padding: 10px 8px 12px; page-break-inside: avoid; }
+  .card img  { width: 80px; height: 80px; object-fit: contain;
+               background: #f8f8f8; border-radius: 8px; display: block;
+               margin: 0 auto 8px; }
+  .label { font-size: .88rem; font-weight: 700; line-height: 1.2; }
+  @media print {
+    body { background: white; padding: 12px; }
+    .card { box-shadow: 0 0 0 1px #eee; }
+    @page { margin: 1.5cm; }
+  }
+</style>
+</head>
+<body>
+<h1>🌟 Lern App – Alle Karten</h1>
+<div class="meta">Exportiert am ${date} &nbsp;·&nbsp; ${Object.keys(vocab).length} Kategorien &nbsp;·&nbsp; ${Object.values(vocab).reduce((s,a)=>s+a.length,0)} Wörter</div>
+${body}
+<script>window.onload=()=>window.print()<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], {type: 'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `lernapp_karten_${date.replace(/\./g,'-')}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Druckseite heruntergeladen!', '#e91e8c');
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+buildTabs();
+renderGrid();
+renderTray();
+</script>
+</body>
+</html>
